@@ -24,6 +24,7 @@ classDiagram
     class Task {
         +String name
         +int duration
+        +String description
         +Priority priority
         +bool isCompleted
         +int frequency
@@ -54,7 +55,7 @@ classDiagram
         +String reasoning
         +generatePlan() void
         +sortTasks() List~Tuple~
-        +findSlot(duration) int
+        +findSlot(duration, earliest) int
         +addPlanEntry(pet, task, start, end, reason) bool
         +getTotalDuration() int
         +displayPlan() void
