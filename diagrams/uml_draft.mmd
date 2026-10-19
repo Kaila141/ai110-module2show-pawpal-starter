@@ -1,6 +1,8 @@
 classDiagram
-    %% availableTimeSlots: list of (start, end) time tuples
-    %% Scheduler.entries: dict of task -> (start time, end time, reason)
+    %% All times are ints: minutes since midnight (8:00 AM = 480)
+    %% availableTimeSlots: list of (start, end) tuples
+    %% getAllTasks / unscheduledTasks: list of (Pet, Task) tuples
+    %% Task.frequency: times per day, entered by the owner
     class Owner {
         +String name
         +List~Pet~ pets
@@ -8,7 +10,7 @@ classDiagram
         +Dict preferences
         +addPet(pet) void
         +setAvailability(slots) void
-        +getAllTasks() List~Task~
+        +getAllTasks() List~Tuple~
     }
 
     class Pet {
@@ -24,7 +26,7 @@ classDiagram
         +int duration
         +Priority priority
         +bool isCompleted
-        +String frequency
+        +int frequency
         +markComplete() void
         +edit(fields) void
     }
@@ -36,14 +38,24 @@ classDiagram
         HIGH
     }
 
+    class PlanEntry {
+        +Pet pet
+        +Task task
+        +int start
+        +int end
+        +String reason
+    }
+
     class Scheduler {
         +Owner owner
         +Date date
-        +Dict entries
+        +List~PlanEntry~ entries
+        +List~Tuple~ unscheduledTasks
         +String reasoning
         +generatePlan() void
-        +sortTasks() List~Task~
-        +addPlanEntry(task, start, end, reason) void
+        +sortTasks() List~Tuple~
+        +findSlot(duration) int
+        +addPlanEntry(pet, task, start, end, reason) bool
         +getTotalDuration() int
         +displayPlan() void
         +explainPlan() String
@@ -53,5 +65,7 @@ classDiagram
     Owner "1" *-- "0..*" Pet : owns
     Pet "1" *-- "0..*" Task : has
     Task --> Priority : priority
-    Scheduler "1" o-- "0..*" Task : schedules
+    Scheduler "1" *-- "0..*" PlanEntry : contains
+    PlanEntry --> Pet : for
+    PlanEntry --> Task : schedules
     Scheduler --> "1" Owner : plans for
