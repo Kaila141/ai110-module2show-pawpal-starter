@@ -1,0 +1,57 @@
+classDiagram
+    %% availableTimeSlots: list of (start, end) time tuples
+    %% Scheduler.entries: dict of task -> (start time, end time, reason)
+    class Owner {
+        +String name
+        +List~Pet~ pets
+        +List~Tuple~ availableTimeSlots
+        +Dict preferences
+        +addPet(pet) void
+        +setAvailability(slots) void
+        +getAllTasks() List~Task~
+    }
+
+    class Pet {
+        +String name
+        +String breedSpecies
+        +List~Task~ tasks
+        +addTask(task) void
+        +removeTask(task) void
+    }
+
+    class Task {
+        +String name
+        +int duration
+        +Priority priority
+        +bool isCompleted
+        +String frequency
+        +markComplete() void
+        +edit(fields) void
+    }
+
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class Scheduler {
+        +Owner owner
+        +Date date
+        +Dict entries
+        +String reasoning
+        +generatePlan() void
+        +sortTasks() List~Task~
+        +addPlanEntry(task, start, end, reason) void
+        +getTotalDuration() int
+        +displayPlan() void
+        +explainPlan() String
+        +hasOverlap(start, end) bool
+    }
+
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : has
+    Task --> Priority : priority
+    Scheduler "1" o-- "0..*" Task : schedules
+    Scheduler --> "1" Owner : plans for
