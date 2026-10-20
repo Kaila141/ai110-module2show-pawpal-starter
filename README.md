@@ -93,14 +93,12 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | Scheduler.sort_tasks(), Scheduler.sort_by_time() | sort_tasks() orders by highest priority, then shortest duration, and is what generate_plan() uses. sort_by_time() orders by shortest duration, then highest priority. |
+| Filtering | Scheduler.filter_tasks(completed, pet_name) | Returns (pet, task) pairs matching a completion status (True/False) and/or a pet name (case-insensitive). Leave a filter as None to skip it. |
+| Conflict handling | Scheduler.detect_conflicts() | Compares every plan entry's start and end times, for the same pet or different pets, and returns a warning message for each overlapping pair instead of raising an error. An empty list means no conflicts. |
+| Recurring tasks | Task.next_occurrence(), Scheduler.complete_task() | A task's recurrence can be "daily" or "weekly". Completing it with complete_task() adds a new copy to the pet, due today + 1 day (daily) or today + 7 days (weekly). generate_plan() skips tasks whose due_date is in the future. |
 
 ## 📸 Demo Walkthrough
 

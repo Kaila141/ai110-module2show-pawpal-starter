@@ -57,6 +57,8 @@ Yes, my design changed after I had Claude review the code skeleton. The top 5 ch
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+One tradeoff my scheduler makes is that it greedily adds tasks to the plan in order of priority (then shortest duration) and puts each one in the first open slot, and it never moves a task once it's placed. This means the plan isn't guaranteed to fit the most tasks possible, since a different arrangement could sometimes leave room for a task that ends up unscheduled. I think this is reasonable because a pet owner only has a handful of tasks and a few hours of availability, so a complex search isn't worth it. It also makes sure the most important tasks (like medication and feeding) get placed first.
+
 ---
 
 ## 3. AI Collaboration

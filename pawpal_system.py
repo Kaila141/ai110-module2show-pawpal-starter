@@ -1,10 +1,13 @@
-from dataclasses import dataclass, field
-from datetime import date as Date
+from dataclasses import dataclass, field, replace
+from datetime import date as Date, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 # All times are stored as minutes since midnight (e.g. 8:00 AM = 480, 1:30 PM = 810).
 Minutes = int
+
+# Days until the next occurrence of a recurring task.
+RECURRENCE_DAYS = {"daily": 1, "weekly": 7}
 
 
 def format_time(minutes: Minutes) -> str:
@@ -28,10 +31,19 @@ class Task:
     priority: Priority = Priority.MEDIUM
     is_completed: bool = False
     frequency: int = 1  # times per day, entered by the owner (e.g. 2 = twice a day)
+    recurrence: Optional[str] = None  # None (one-off), "daily" or "weekly"
+    due_date: Optional[Date] = None  # day this task is due; None means "whenever it's scheduled"
 
     def mark_complete(self) -> None:
         """Mark this task as completed."""
         self.is_completed = True
+
+    def next_occurrence(self, today: Date) -> Optional["Task"]:
+        """Return a fresh copy due on the next daily/weekly date, or None if this task doesn't recur."""
+        days = RECURRENCE_DAYS.get(self.recurrence or "")
+        if days is None:
+            return None
+        return replace(self, is_completed=False, due_date=today + timedelta(days=days))
 
     def edit(self, **fields) -> None:
         """Update the given fields (at a minimum, name and duration) on this task."""
@@ -109,8 +121,8 @@ class Scheduler:
         day_end = max((e for _, e in slots), default=0)
 
         for pet, task in self.sort_tasks():
-            if task.is_completed:
-                continue
+            if task.is_completed or (task.due_date and task.due_date > self.date):
+                continue  # done already, or not due until a later day
             gap = (day_end - day_start) / task.frequency
             for occurrence in range(task.frequency):
                 target = day_start + round(occurrence * gap)
@@ -136,6 +148,30 @@ class Scheduler:
             self.owner.get_all_tasks(),
             key=lambda pair: (-pair[1].priority.value, pair[1].duration),
         )
+
+    def sort_by_time(self) -> List[Tuple[Pet, Task]]:
+        """Return the owner's (pet, task) pairs sorted by shortest duration, then highest priority."""
+        return sorted(
+            self.owner.get_all_tasks(),
+            key=lambda pair: (pair[1].duration, -pair[1].priority.value),
+        )
+
+    def filter_tasks(self, completed: Optional[bool] = None, pet_name: Optional[str] = None) -> List[Tuple[Pet, Task]]:
+        """Return (pet, task) pairs matching the given completion status and/or pet name (None = no filter)."""
+        return [
+            (pet, task)
+            for pet, task in self.owner.get_all_tasks()
+            if (completed is None or task.is_completed == completed)
+            and (pet_name is None or pet.name.lower() == pet_name.lower())
+        ]
+
+    def complete_task(self, pet: Pet, task: Task) -> Optional[Task]:
+        """Mark a task complete; if it is daily/weekly, add its next occurrence to the pet and return it."""
+        task.mark_complete()
+        next_task = task.next_occurrence(self.date)
+        if next_task is not None:
+            pet.add_task(next_task)
+        return next_task
 
     def find_slot(self, duration: int, earliest: Minutes = 0) -> Optional[Minutes]:
         """Return the earliest open start time at or after `earliest` that fits `duration`, or None."""
@@ -192,6 +228,20 @@ class Scheduler:
                 f"occurrence(s) had no open {task.duration}-minute slot."
             )
         return "\n".join(lines) if lines else "No tasks scheduled."
+
+    def detect_conflicts(self) -> List[str]:
+        """Return a warning message for each pair of plan entries whose times overlap (empty if none)."""
+        ordered = sorted(self.entries, key=lambda e: e.start)
+        warnings = []
+        for i, a in enumerate(ordered):
+            for b in ordered[i + 1:]:
+                if b.start >= a.end:
+                    break  # sorted by start, so nothing later can overlap a
+                warnings.append(
+                    f"Warning: {a.pet.name}: {a.task.name} ({format_time(a.start)} - {format_time(a.end)}) "
+                    f"overlaps {b.pet.name}: {b.task.name} ({format_time(b.start)} - {format_time(b.end)})"
+                )
+        return warnings
 
     def has_overlap(self, start: Minutes, end: Minutes) -> bool:
         """Return True if [start, end) overlaps any existing entry."""
