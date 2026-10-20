@@ -81,15 +81,37 @@ The Owner exposes a single method, get_all_tasks(), that gathers every pet's tas
 # Run the full test suite:
 pytest
 
-# Run with coverage:
-pytest --cov
+# Run with coverage (requires pytest-cov):
+pytest --cov=pawpal_system --cov-report=term-missing
 ```
 
 Sample test output:
 
 ```
-# Paste your pytest output here
+============= test session starts ==============
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Amand\Coding\CodePath AI110\ai110-module2show-pawpal-starter
+configfile: ov
+plugins: anyio-4.15.1
+collected 26 items                              
+
+test\test_pawpal.py ..................... [ 80%]
+.....                                     [100%]
+
+============== 26 passed in 0.06s ==============
 ```
+
+### What the tests cover
+
+The tests cover the scheduling logic in pawpal_system.py:
+
+- Sorting: It tests different sorting orders (priority first then time first), ties, ordering across multiple pets, empty owners, and ensuring the plan prints in chronological order.
+- Recurrence: It tests that new occurences are created for reoccuring tasks that are completed while one-off tasks create nothing. It also tests that dates roll over month and year ends. Future-dated copies are not scheduled early.
+- Plan generation: multi-occurrence tasks are spread across the day, completed tasks are skipped, tasks that don't fit land in `unscheduled_tasks`, plans never overlap, and regenerating gives the same plan.
+- Conflict detection: duplicate start times are flagged, overlapping and out-of-window bookings are rejected, and back-to-back tasks are not treated as conflicts.
+- Filtering: by completion status and pet name (case-insensitive), combined, and with an unknown pet.
+
+I would give this a 4/5 confidence level. All 26 tests pass and  cover the core behaviors and their edge cases, but I held back a star because of ucnertainty where sort_by_time orders by duration, not clock time. Also since multiple-day scheduling isn't tested either.
 
 ## 📐 Smarter Scheduling
 

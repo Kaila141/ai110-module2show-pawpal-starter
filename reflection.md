@@ -5,9 +5,11 @@
 **a. Initial design**
 Core Actions:
 A user should be able to perform the following core actions with this app:
-* Add a pet
-* Feed the pet
-* See today's care tasks for the pet 
+* Owner can add tasks for multiple pets and generate a plan including all of them
+* Generates a plan in priority order 
+* Multi-occurence tasks are spread out in a day
+* Sorting tasks by time returns in the right order
+* Completing a recurring task creates a new occurence to be scheduled later
 
 Main Objects:
 * Owner
