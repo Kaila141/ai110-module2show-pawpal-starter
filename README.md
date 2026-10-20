@@ -70,6 +70,11 @@ Why this plan:
 5:10 PM - 5:40 PM Buddy: Walk (High priority, occurrence 2 of 2; spaced through the day (aimed for 1:30 PM).)
 ```
 
+## Implementation Summary
+PawPal+ is a daily pet-care scheduler built around four core classes in pawpal_system.py (Owner, Pet, Task, Scheduler) and an extra, class for PlanEntry. An Owner has several Pets and a set of available time windows, and each Pet keeps its own list of Tasks. A Task is one care activity, such as a walk, a feeding or a medication. It has a description, a duration in minutes, a priority, a completion flag, and a frequency that says how many times a day it should happen. Each placement is stored as a PlanEntry that records the pet, task, start and end times, and the reason it was put there.
+
+The Owner exposes a single method, get_all_tasks(), that gathers every pet's tasks together and pairs each one with its pet. The Scheduler reads from that method rather than from any one pet, which is what makes the plan work across multiple pets. To build a plan, the Scheduler sorts those tasks by priority, then by duration. It then places each task's occurrences at times spread throughout the owner's available window, so a twice daily task occurs in the morning and evening. For every occurrence it finds the first available time that doesn't overlap anything already scheduled. If a recurring task can't fit, it's skipped, and the ones that do remain scheduled. Anything that doesn't are recorded as unscheduled. The Scheduler can then print the day's plan, total up the scheduled minutes, and explain why each task is where it is and why any were skipped.
+
 ## 🧪 Testing PawPal+
 
 ```bash

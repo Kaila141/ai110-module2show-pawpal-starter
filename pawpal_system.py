@@ -88,6 +88,7 @@ class PlanEntry:
 
 class Scheduler:
     def __init__(self, owner: Owner, date: Date):
+        """Create an empty plan for the given owner and date."""
         self.owner = owner
         self.date = date
         self.entries: List[PlanEntry] = []
@@ -95,14 +96,10 @@ class Scheduler:
         self.reasoning: str = ""
 
     def generate_plan(self) -> None:
-        """Clear entries, unscheduled_tasks and reasoning, then rebuild the plan.
-
-        For each sorted task, its `frequency` occurrences are spread evenly across the owner's
-        available window: occurrence i aims for day_start + i * (window / frequency) and takes
-        the first open time at or after that target (via find_slot). If nothing fits after the
-        target, it falls back to the earliest open time anywhere. Occurrences that still don't
-        fit go to unscheduled_tasks (one per missed occurrence); the rest are still scheduled.
-        """
+        """Rebuild the plan from scratch, spreading each task's occurrences through the day."""
+        # Occurrence i aims for day_start + i * (window / frequency) and takes the first open
+        # time at or after it, falling back to the earliest open time anywhere. Occurrences
+        # that still don't fit go to unscheduled_tasks (one per miss); the rest are scheduled.
         self.entries = []
         self.unscheduled_tasks = []
         self.reasoning = ""
@@ -134,18 +131,14 @@ class Scheduler:
         self.reasoning = self.explain_plan()
 
     def sort_tasks(self) -> List[Tuple[Pet, Task]]:
-        """Sort the owner's tasks; Priority is an Enum, so sort with key=task.priority.value.
-
-        Highest priority first, then shortest duration first.
-        """
+        """Return the owner's (pet, task) pairs sorted by highest priority, then shortest duration."""
         return sorted(
             self.owner.get_all_tasks(),
             key=lambda pair: (-pair[1].priority.value, pair[1].duration),
         )
 
     def find_slot(self, duration: int, earliest: Minutes = 0) -> Optional[Minutes]:
-        """Return the earliest start time at or after `earliest` where `duration` minutes fit
-        in an available slot without overlapping an existing entry, or None if there is no room."""
+        """Return the earliest open start time at or after `earliest` that fits `duration`, or None."""
         for slot_start, slot_end in sorted(self.owner.available_time_slots):
             start = max(slot_start, earliest)
             while start + duration <= slot_end:
@@ -158,10 +151,7 @@ class Scheduler:
         return None
 
     def add_plan_entry(self, pet: Pet, task: Task, start: Minutes, end: Minutes, reason: str) -> bool:
-        """Add an entry if it doesn't overlap another entry and sits inside an available slot.
-
-        Returns True if added, False if rejected.
-        """
+        """Add an entry if it fits an available slot without overlapping; return whether it was added."""
         if start >= end:
             return False
         inside_slot = any(s <= start and end <= e for s, e in self.owner.available_time_slots)

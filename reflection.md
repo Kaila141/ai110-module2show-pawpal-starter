@@ -66,10 +66,14 @@ Yes, my design changed after I had Claude review the code skeleton. The top 5 ch
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
 - What kinds of prompts or questions were most helpful?
 
+I used Claude to help with brainstorming, implementation, and refactoring. With every output, I would go through it thoroughly to ensure I understand what it was doing. If there was something I didn't understand, then I would prompt it to further explain what it did or suggested. For instance, some of the design changes that I made above were done only after I asked Claude to explain the change.
+
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
 - How did you evaluate or verify what the AI suggested?
+
+One instance was with how Claude suggested representing the frequency. My first thought was to make it a string so users entered how often they wished the task to be done. When I asked for feedback and bottlenecks of my design, Claude pointed out an issue with case comparisons and the risk of the user entering a value that doesn't make sense. So it suggested making it an Enum of values: "once, daily, weekly, monthly". I didn't quite like that idea because it didn't account for cases where tasks should be done multiple times a day, among others. When I raised this point, it then suggsted making frequency a Frequency(times, per) class with a Period enum (day, week, month) so that tasks could repeat per day, week, or month. I actualy liked this idea, but when it said that I would have to track the completion history for weekly and monthly tasks to know if they've been done already, I decided against it. Then, I decided to revisit the problem statement to see if there were any requirements or suggestions placed for frequency. That's when I saw that it mentioned daily routines. So, I told Claude that supporting longer periods would eb out of scope for now and that frequency was best kept as a simple times per-day number that the owner enters. 
 
 ---
 
