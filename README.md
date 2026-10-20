@@ -75,6 +75,19 @@ PawPal+ is a daily pet-care scheduler built around four core classes in pawpal_s
 
 The Owner exposes a single method, get_all_tasks(), that gathers every pet's tasks together and pairs each one with its pet. The Scheduler reads from that method rather than from any one pet, which is what makes the plan work across multiple pets. To build a plan, the Scheduler sorts those tasks by priority, then by duration. It then places each task's occurrences at times spread throughout the owner's available window, so a twice daily task occurs in the morning and evening. For every occurrence it finds the first available time that doesn't overlap anything already scheduled. If a recurring task can't fit, it's skipped, and the ones that do remain scheduled. Anything that doesn't are recorded as unscheduled. The Scheduler can then print the day's plan, total up the scheduled minutes, and explain why each task is where it is and why any were skipped.
 
+## ✨ Features
+
+- Priority sorting: Tasks are ranked high to low priority, with shorter tasks first when priorities tie. The daily plan is built in this order.
+- Duration sorting: Tasks can also be listed shortest first (ties go to the higher priority).
+- Time-ordered schedule: The finished plan is always shown from the earliest task to the latest, regardless of the order the tasks were added.
+- Spread-out repeats: A task done several times a day (like two walks) is spaced across your available hours instead of stacked together.
+- Multiple pets: One owner can have many pets, and the plan fits all of their tasks into one shared day.
+- Filtering: Narrow the task list by pet name and/or whether tasks are done or still to do.
+- Daily and weekly recurrence: Completing a repeating task automatically adds the next one, due the next day or the next week. Tasks that aren't due yet are left out of today's plan.
+- Conflict warnings: If two scheduled tasks ever overlap, a warning names both and their times instead of crashing. The scheduler also refuses to book overlapping times in the first place.
+- Unscheduled tasks: Anything that doesn't fit the available time is listed with a suggestion, rather than silently dropped.
+- Plan explanations: Each scheduled task comes with a short reason for why it landed at that time.
+
 ## 🧪 Testing PawPal+
 
 ```bash
@@ -124,12 +137,125 @@ I would give this a 4/5 confidence level. All 26 tests pass and  cover the core 
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### What you can do in the app
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+Run it with `streamlit run app.py`. The page works top to bottom:
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+- **Owner:** Enter your name and the hours you're free each day (default 7:00 AM to 8:00 PM).
+- **Pets:** Add a pet by name and species. A small table shows each pet and how many tasks it has.
+- **Tasks:** Add a task for a pet with a title, length in minutes, priority, how many times per day, and whether it repeats daily or weekly. Sort and filter the list, and mark tasks done.
+- **Build Schedule:** Press one button to get today's plan, with a reason for every time slot.
+
+### Example workflow
+
+1. Add two pets: **Mochi** (a dog) and **Whiskers** (a cat).
+2. Add tasks for Mochi:
+   - **Morning walk**: 20 minutes, high priority, 2 times a day, repeats daily.
+   - **Brush fur**: 15 minutes, low priority.
+   - **Training**: 25 minutes, medium priority.
+3. Add tasks for Whiskers:
+   - **Give medication**: 5 minutes, high priority, repeats daily.
+   - **Feed**: 10 minutes, high priority, 2 times a day.
+   - **Play time**: 20 minutes, medium priority.
+4. Use the **Pet**, **Status** and **Sort by** dropdowns to view your six tasks in different ways, such as only Whiskers's tasks, or shortest first.
+5. Press **Generate schedule** to see today's plan. Both pets share one day, and the two-a-day tasks are split between morning and evening.
+6. Mark **Give medication** complete. The app confirms the next dose is due tomorrow.
+7. Press **Generate schedule** again. Today's plan no longer includes the finished medication, and the filters now show it as done.
+
+### What the scheduler shows you
+
+- Sorting: The most important, fastest tasks are placed first.
+- Spacing: Tasks that repeat in a day are spread out, such as one walk in the morning and one in the evening.
+- Conflict warnings: If two tasks ever overlap, a warning appears above the schedule naming both. A green message appears only when the plan is clean.
+- Skipped tasks: If something can't fit in your free time, you're told which task and how to fix it.
+- Explanations: Open "Why is the plan in this order?" to see the reasoning for each slot.
+
+### Sample command-line output
+
+`python main.py` runs the same scheduler without the web page. It builds a plan for two pets (Buddy the dog and Mia the cat), then runs checks on sorting, filtering, recurring tasks and conflict warnings. In the last check the app places tasks at overlapping times by hand, to show that the warnings appear.
+
+```
+========================================
+Today's Schedule
+========================================
+Plan for Tuesday, October 20, 2026
+  7:00 AM - 7:05 AM  Mia: Give medication
+  7:05 AM - 7:15 AM  Mia: Feed
+  7:15 AM - 7:45 AM  Buddy: Walk
+  7:45 AM - 8:05 AM  Mia: Play
+  8:05 AM - 8:30 AM  Buddy: Train tricks
+  8:30 AM - 8:45 AM  Buddy: Brush fur
+  5:00 PM - 5:10 PM  Mia: Feed
+  5:10 PM - 5:40 PM  Buddy: Walk
+Total scheduled: 145 min
+
+Why this plan:
+7:00 AM - 7:05 AM Mia: Give medication (High priority, occurrence 1 of 1; spaced through the day (aimed for 7:00 AM).)
+7:05 AM - 7:15 AM Mia: Feed (High priority, occurrence 1 of 2; spaced through the day (aimed for 7:00 AM).)
+7:15 AM - 7:45 AM Buddy: Walk (High priority, occurrence 1 of 2; spaced through the day (aimed for 7:00 AM).)
+7:45 AM - 8:05 AM Mia: Play (Medium priority, occurrence 1 of 1; spaced through the day (aimed for 7:00 AM).)
+8:05 AM - 8:30 AM Buddy: Train tricks (Medium priority, occurrence 1 of 1; spaced through the day (aimed for 7:00 AM).)
+8:30 AM - 8:45 AM Buddy: Brush fur (Low priority, occurrence 1 of 1; spaced through the day (aimed for 7:00 AM).)
+5:00 PM - 5:10 PM Mia: Feed (High priority, occurrence 2 of 2; spaced through the day (aimed for 1:30 PM).)
+5:10 PM - 5:40 PM Buddy: Walk (High priority, occurrence 2 of 2; spaced through the day (aimed for 1:30 PM).)
+
+========================================
+Sorting and filtering checks
+========================================
+
+sort_tasks() - priority, then duration:
+  Mia    Give medication   5 min  HIGH   pending
+  Mia    Feed             10 min  HIGH   pending
+  Buddy  Walk             30 min  HIGH   pending
+  Mia    Play             20 min  MEDIUM pending
+  Buddy  Train tricks     25 min  MEDIUM done
+  Buddy  Brush fur        15 min  LOW    done
+
+sort_by_time() - duration, then priority:
+  Mia    Give medication   5 min  HIGH   pending
+  Mia    Feed             10 min  HIGH   pending
+  Buddy  Brush fur        15 min  LOW    done
+  Mia    Play             20 min  MEDIUM pending
+  Buddy  Train tricks     25 min  MEDIUM done
+  Buddy  Walk             30 min  HIGH   pending
+
+filter_tasks(completed=True):
+  Buddy  Train tricks     25 min  MEDIUM done
+  Buddy  Brush fur        15 min  LOW    done
+
+filter_tasks(completed=False):
+  Buddy  Walk             30 min  HIGH   pending
+  Mia    Play             20 min  MEDIUM pending
+  Mia    Give medication   5 min  HIGH   pending
+  Mia    Feed             10 min  HIGH   pending
+
+filter_tasks(pet_name='mia'):
+  Mia    Play             20 min  MEDIUM pending
+  Mia    Give medication   5 min  HIGH   pending
+  Mia    Feed             10 min  HIGH   pending
+
+filter_tasks(completed=False, pet_name='Buddy'):
+  Buddy  Walk             30 min  HIGH   pending
+
+filter_tasks(pet_name='Rex') - no such pet:
+  (none)
+
+========================================
+Recurring task check
+========================================
+  Daily meds: done -> next 'Daily meds' (daily) due 2026-10-21
+  Bath: done -> next 'Bath' (weekly) due 2026-10-27
+  Vet visit: done -> no next occurrence (one-off)
+  Tomorrow's plan includes 'Daily meds': True
+  Today's plan includes 'Daily meds': False
+
+========================================
+Conflict detection check
+========================================
+  Generated plan conflicts: none
+  Warning: Buddy: Vet call (6:00 PM - 6:30 PM) overlaps Buddy: Grooming (6:00 PM - 6:45 PM)
+  Warning: Buddy: Vet call (6:00 PM - 6:30 PM) overlaps Mia: Vet call (6:15 PM - 6:25 PM)
+  Warning: Buddy: Grooming (6:00 PM - 6:45 PM) overlaps Mia: Vet call (6:15 PM - 6:25 PM)
+
+Owner availability: 7:00 AM - 9:00 AM, 5:00 PM - 8:00 PM
+```

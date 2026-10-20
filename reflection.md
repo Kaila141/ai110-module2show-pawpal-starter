@@ -54,6 +54,8 @@ Yes, my design changed after I had Claude review the code skeleton. The top 5 ch
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
 
+My scheduler considers time constraints, like the owner's availability and priority of tasks. I felt that to was more important for availability to matter more, but if I were to redo this assignent, I would make it so that priority matters more so that things like vet appointments can stretch into unavailable time slots and the owner can approve of it.
+
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
@@ -88,10 +90,19 @@ One instance was with how Claude suggested representing the frequency. My first 
 - What behaviors did you test?
 - Why were these tests important?
 
+The tests cover the scheduling logic in pawpal_system.py:
+- Sorting: It tests different sorting orders (priority first then time first), ties, ordering across multiple pets, empty owners, and ensuring the plan prints in chronological order.
+- Recurrence: It tests that new occurences are created for reoccuring tasks that are completed while one-off tasks create nothing. It also tests that dates roll over month and year ends. Future-dated copies are not scheduled early.
+- Plan generation: multi-occurrence tasks are spread across the day, completed tasks are skipped, tasks that don't fit land in `unscheduled_tasks`, plans never overlap, and regenerating gives the same plan.
+- Conflict detection: duplicate start times are flagged, overlapping and out-of-window bookings are rejected, and back-to-back tasks are not treated as conflicts.
+- Filtering: by completion status and pet name (case-insensitive), combined, and with an unknown pet.
+
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
 - What edge cases would you test next if you had more time?
+
+I would give this a 4/5 confidence level. All 26 tests pass and  cover the core behaviors and their edge cases, but I held back a star because of ucnertainty where sort_by_time orders by duration, not clock time. Also since multiple-day scheduling isn't tested either.
 
 ---
 
@@ -100,11 +111,18 @@ One instance was with how Claude suggested representing the frequency. My first 
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+I am satisfied with the process. I learned a lot about being a lead architect while using AI tools. There was a lot of back and forth as I decided what features would be best to include and which ones were out of scope.
 
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
 
+If I had another iteration of this process, I would improve the deisgn to consider other constraints like owner preferences and allowing high priority tasks to optionally override the available time slots.
+
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+It is important to ensure I understand the problem statement and if not, ask AI to help explain it to me too. That was a mistake I made at the beginning, where most of my time was spent trying to understand the system myself instead of brainstorming with AI.
+
+Also, using multiple sessions helped keep context from getting muddled. So it could focus on giving edge cases without the context of the implementation influencing that.

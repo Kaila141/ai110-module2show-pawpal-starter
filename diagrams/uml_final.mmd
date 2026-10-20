@@ -1,0 +1,83 @@
+classDiagram
+    %% Final implementation (pawpal_system.py). Names match the code (snake_case).
+    %% All times are ints: minutes since midnight (8:00 AM = 480)
+    %% available_time_slots: list of (start, end) tuples
+    %% get_all_tasks / unscheduled_tasks / sort & filter results: lists of (Pet, Task) tuples
+    %% Task.frequency: times per day; Task.recurrence: None, "daily" or "weekly"
+    class Owner {
+        +String name
+        +List~Pet~ pets
+        +List~Tuple~ available_time_slots
+        +Dict preferences
+        +add_pet(pet) void
+        +set_availability(slots) void
+        +get_all_tasks() List~Tuple~
+    }
+
+    class Pet {
+        +String name
+        +String breed_species
+        +List~Task~ tasks
+        +add_task(task) void
+        +remove_task(task) void
+    }
+
+    class Task {
+        +String name
+        +int duration
+        +String description
+        +Priority priority
+        +bool is_completed
+        +int frequency
+        +String recurrence
+        +Date due_date
+        +mark_complete() void
+        +next_occurrence(today) Task
+        +edit(fields) void
+    }
+
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class PlanEntry {
+        <<dataclass>>
+        +Pet pet
+        +Task task
+        +int start
+        +int end
+        +String reason
+    }
+
+    class Scheduler {
+        +Owner owner
+        +Date date
+        +List~PlanEntry~ entries
+        +List~Tuple~ unscheduled_tasks
+        +String reasoning
+        +generate_plan() void
+        +sort_tasks() List~Tuple~
+        +sort_by_time() List~Tuple~
+        +filter_tasks(completed, pet_name) List~Tuple~
+        +complete_task(pet, task) Task
+        +find_slot(duration, earliest) int
+        +add_plan_entry(pet, task, start, end, reason) bool
+        +get_total_duration() int
+        +display_plan() void
+        +explain_plan() String
+        +detect_conflicts() List~String~
+        +has_overlap(start, end) bool
+    }
+
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : has
+    Task --> Priority : priority
+    Task ..> Task : next_occurrence() creates a copy
+    Scheduler "1" *-- "0..*" PlanEntry : contains
+    PlanEntry --> Pet : for
+    PlanEntry --> Task : schedules
+    Scheduler --> "1" Owner : plans for
+    Scheduler ..> Pet : complete_task() adds next occurrence
